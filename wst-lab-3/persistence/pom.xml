@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>com.programmer74</groupId>
-        <artifactId>wst-lab-1</artifactId>
+        <artifactId>wst-lab-3</artifactId>
         <version>1.0</version>
     </parent>
     <artifactId>persistence</artifactId>
