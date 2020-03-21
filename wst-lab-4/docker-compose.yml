@@ -5,12 +5,12 @@ services:
       context: ./containers/postgre
     ports:
       - "5432:5432"
-    image: wst_1_postgre_image
+    image: wst_4_postgre_image
     container_name: postgre4
   glassfish:
     build:
      context: ./containers/glassfish
-    image: wst_1_glassfish_image
+    image: wst_4_glassfish_image
     container_name: glassfish4
     links:
       - postgre

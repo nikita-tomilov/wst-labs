@@ -1,10 +1,7 @@
 package com.programmer74.wstlab1.service;
 
-import com.programmer74.wstlab1.api.UserCreateDTO;
-import com.programmer74.wstlab1.api.UserDTO;
-import com.programmer74.wstlab1.api.UsersDTO;
-import com.programmer74.wstlab1.api.UsersServiceApi;
 import com.programmer74.wstlab1.database.dao.UserDAO;
+import com.programmer74.wstlab1.database.dto.UserDTO;
 import com.programmer74.wstlab1.database.entity.User;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +23,13 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Data
 @Slf4j
 @Path("/users")
 @ManagedBean
-public class UsersService implements UsersServiceApi {
+public class UsersService {
 
   @Resource(mappedName = "jdbc/users")
   private DataSource dataSource;
@@ -46,20 +43,17 @@ public class UsersService implements UsersServiceApi {
 
   private final static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-  @Override
   @GET
   @Path("/all")
   @Produces({MediaType.APPLICATION_JSON})
-  public UsersDTO findAll() throws SQLException {
-    return new UsersDTO(userDAO.findAll().stream().map(this::fromEntity)
-        .collect(Collectors.toList()));
+  public List<User> findAll() throws SQLException {
+    return userDAO.findAll();
   }
 
-  @Override
   @GET
   @Path("/filter")
   @Produces({MediaType.APPLICATION_JSON})
-  public UsersDTO findWithFilters(
+  public List<User> findWithFilters(
       @QueryParam("id") Long id, @QueryParam("login") String login,
       @QueryParam("password") String password, @QueryParam("email") String email,
       @QueryParam("gender") Boolean gender, @QueryParam("registerDate") String registerDate
@@ -75,12 +69,9 @@ public class UsersService implements UsersServiceApi {
     } else {
       date = null;
     }
-    return new UsersDTO(userDAO.findWithFilters(id, login, password, email, gender, date).stream()
-        .map(this::fromEntity)
-        .collect(Collectors.toList()));
+    return userDAO.findWithFilters(id, login, password, email, gender, date);
   }
 
-  @Override
   @DELETE
   @Path("/{id}")
   @WebMethod
@@ -100,11 +91,10 @@ public class UsersService implements UsersServiceApi {
     }
   }
 
-  @Override
   @POST
   @WebMethod
   @Produces(MediaType.TEXT_PLAIN)
-  public String insert(UserCreateDTO userCreateDTO) {
+  public String insert(UserDTO userCreateDTO) {
     try {
       Date parse = new SimpleDateFormat("yyyy-MM-dd").parse(userCreateDTO.getRegisterDate());
       return String.valueOf(userDAO.insert(userCreateDTO.getLogin(), userCreateDTO.getPassword(),
@@ -118,7 +108,6 @@ public class UsersService implements UsersServiceApi {
     return String.valueOf(-1L);
   }
 
-  @Override
   @PUT
   @Path("/{id}")
   @Produces(MediaType.TEXT_PLAIN)
@@ -137,15 +126,5 @@ public class UsersService implements UsersServiceApi {
       e.printStackTrace();
     }
     return String.valueOf(update);
-  }
-
-  private UserDTO fromEntity(User u) {
-    return new UserDTO(
-        u.getId(),
-        u.getLogin(),
-        u.getPassword(),
-        u.getEmail(),
-        u.getGender(),
-        sdf.format(u.getRegisterDate()));
   }
 }
