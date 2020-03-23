@@ -1,0 +1,9 @@
+version: '3'
+services:
+  postgre:
+    build:
+      context: ./containers/postgre
+    ports:
+      - "5432:5432"
+    image: wst_4_postgre_image
+    container_name: postgre4
