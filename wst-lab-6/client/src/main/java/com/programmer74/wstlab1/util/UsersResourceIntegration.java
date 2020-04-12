@@ -10,6 +10,7 @@ import com.sun.jersey.api.client.WebResource;
 import lombok.extern.slf4j.Slf4j;
 import javax.ws.rs.core.MediaType;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.List;
 
 @Slf4j
@@ -77,7 +78,8 @@ public class UsersResourceIntegration {
   public Long insert(UserDTO userDTO) throws Exception {
     Client client = Client.create();
     WebResource webResource = client.resource(BASE_URL);
-    ClientResponse response = webResource.accept(MediaType.TEXT_PLAIN)
+    ClientResponse response = webResource.header("Authorization", getAuthHeader())
+        .accept(MediaType.TEXT_PLAIN)
         .entity(userDTO)
         .post(ClientResponse.class);
     if (response.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
@@ -94,7 +96,8 @@ public class UsersResourceIntegration {
       return -1;
     }
     WebResource webResource = client.resource(String.format(UPDATE_URL, id));
-    ClientResponse response = webResource.accept(MediaType.TEXT_PLAIN)
+    ClientResponse response = webResource.header("Authorization", getAuthHeader())
+        .accept(MediaType.TEXT_PLAIN)
         .entity(userDTO)
         .put(ClientResponse.class);
     return clientIntResponseOrException(response);
@@ -106,7 +109,8 @@ public class UsersResourceIntegration {
       return -1;
     }
     WebResource webResource = client.resource(String.format(DELETE_URL, id));
-    ClientResponse response = webResource.accept(MediaType.TEXT_PLAIN).delete(ClientResponse.class);
+    ClientResponse response = webResource.header("Authorization", getAuthHeader())
+        .accept(MediaType.TEXT_PLAIN).delete(ClientResponse.class);
     return clientIntResponseOrException(response);
   }
 
@@ -129,5 +133,12 @@ public class UsersResourceIntegration {
     }
     throw new IllegalStateException(
         "Request failed. HTTP code: " + response.getStatus() + " " + response.getEntity(type));
+  }
+
+  private String getAuthHeader() {
+    String username = "abc";
+    String password = "1234";
+    return "Basic " + Base64.getEncoder()
+        .encodeToString((username + ":" + password).getBytes());
   }
 }

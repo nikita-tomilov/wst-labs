@@ -3,6 +3,8 @@ package com.programmer74.wstlab1.service;
 import com.programmer74.wstlab1.database.dao.UserDAO;
 import com.programmer74.wstlab1.database.dto.UserDTO;
 import com.programmer74.wstlab1.database.entity.User;
+import com.programmer74.wstlab1.service.exception.AuthenticationException;
+import com.programmer74.wstlab1.service.exception.ForbiddenException;
 import com.programmer74.wstlab1.service.exception.SqlException;
 import com.programmer74.wstlab1.service.exception.UserServiceException;
 import com.programmer74.wstlab1.standalone.App;
@@ -14,6 +16,7 @@ import javax.jws.WebMethod;
 import javax.sql.DataSource;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -26,6 +29,7 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -88,7 +92,9 @@ public class UsersService {
   @Path("/{id}")
   @WebMethod
   @Produces(MediaType.TEXT_PLAIN)
-  public String delete(@PathParam("id") Long id) throws UserServiceException, SqlException {
+  public String delete(@PathParam("id") Long id, @HeaderParam("authorization") String authHeader)
+  throws UserServiceException, SqlException {
+    checkCredentials(authHeader);
     try {
       if (id == null) {
         throw new UserServiceException("Id can't be null");
@@ -107,7 +113,9 @@ public class UsersService {
   @POST
   @WebMethod
   @Produces(MediaType.TEXT_PLAIN)
-  public String insert(UserDTO userDTO) throws UserServiceException, SqlException {
+  public String insert(UserDTO userDTO, @HeaderParam("authorization") String authHeader)
+  throws UserServiceException, SqlException {
+    checkCredentials(authHeader);
     try {
       Date parse = new SimpleDateFormat("yyyy-MM-dd").parse(userDTO.getRegisterDate());
       return String.valueOf(userDAO.insert(userDTO.getLogin(), userDTO.getPassword(),
@@ -124,8 +132,13 @@ public class UsersService {
   @PUT
   @Path("/{id}")
   @Produces(MediaType.TEXT_PLAIN)
-  public String update(@PathParam("id") Long id, UserDTO userDTO)
+  public String update(
+      @PathParam("id") Long id,
+      @HeaderParam("authorization") String authHeader,
+      UserDTO userDTO
+  )
   throws UserServiceException, SqlException {
+    checkCredentials(authHeader);
     int update = 0;
     try {
       Date parse = new SimpleDateFormat("yyyy-MM-dd").parse(userDTO.getRegisterDate());
@@ -142,5 +155,42 @@ public class UsersService {
       e.printStackTrace();
       throw new UserServiceException("Cannot parse date " + userDTO.getRegisterDate());
     }
+  }
+
+  private void checkCredentials(String authString)
+  throws AuthenticationException, ForbiddenException, SqlException {
+    if (authString == null || authString.equals("")) {
+      throw new AuthenticationException("Authorization required for CUD operations");
+    }
+
+    String authType = authString.split(" ")[0];
+    String authParam = authString.split(" ")[1];
+
+    if (!authType.equals("Basic")) {
+      String message = "Unknown auth type " + authType;
+      throw new AuthenticationException(message);
+    }
+
+    String decodedAuth = new String(Base64.getDecoder().decode(authParam));
+    String username = decodedAuth.split(":")[0];
+    String password = decodedAuth.split(":")[1];
+
+    List<User> users;
+    try {
+      users =
+          userDAO.findWithFilters(null, username, null, null, null, null);
+    } catch (SQLException ex) {
+      throw new SqlException(ex.getMessage());
+    }
+    if (users.isEmpty()) {
+      String message = "Unknown user!";
+      throw new ForbiddenException(message);
+    }
+    User user = users.get(0);
+    if (!(user.getPassword().equals(password))) {
+      String message = "Wrong password!";
+      throw new ForbiddenException(message);
+    }
+    System.out.println("AUTH USING " + username + " " + password);
   }
 }
