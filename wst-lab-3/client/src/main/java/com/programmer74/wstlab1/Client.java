@@ -10,13 +10,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.ws.BindingProvider;
+import javax.xml.ws.handler.MessageContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class Client {
@@ -57,6 +64,7 @@ public class Client {
                 .stream().map(Client::userToString).forEach(System.out::println);
             break;
           case INSERT:
+            addAuthHeader(userPort);
             System.out.println("Введите поля нового пользователя:");
             userDTO = readUser(reader);
             System.out.println("Пользоваетль успешно добавлен. Его id: " + userPort
@@ -64,6 +72,7 @@ public class Client {
                     userDTO.getEmail(), userDTO.getGender(), userDTO.getRegisterDate()));
             break;
           case UPDATE:
+            addAuthHeader(userPort);
             System.out.print("Введите id пользователя, которого хотите изменить: ");
             id = readLong(reader);
             System.out.println("Введите новые поля пользователя");
@@ -79,6 +88,7 @@ public class Client {
             );
             break;
           case DELETE:
+            addAuthHeader(userPort);
             System.out.print("Введите id пользователя, которого хотите удалить: ");
             id = readLong(reader);
             System.out.println(userPort.delete(id));
@@ -91,6 +101,20 @@ public class Client {
         System.out.println("Попробуй ещё раз!");
       }
     }
+  }
+
+  private static void addAuthHeader(UsersService usersService) {
+    Map<String, Object> req_ctx = ((BindingProvider) usersService).getRequestContext();
+    req_ctx.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "http://localhost:8080/users?wsdl");
+
+    String username = "abc";
+    String password = "1234";
+    String headerString = "Basic " + Base64.getEncoder()
+        .encodeToString((username + ":" + password).getBytes());
+
+    Map<String, List<String>> headers = new HashMap<>();
+    headers.put("Authorization", Collections.singletonList(headerString));
+    req_ctx.put(MessageContext.HTTP_REQUEST_HEADERS, headers);
   }
 
   private static UserDTO readUser(BufferedReader reader) {

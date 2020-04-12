@@ -54,11 +54,15 @@ Connected to the target VM, address: '127.0.0.1:53273', transport: 'socket'
     5. Удалить пользователя
     6. Выйти
     > 1
+    User{id=1, login='abc', email='abc@mail.ru', gender=true, registerDate=1998-01-01T00:00:00+03:00}
     User{id=2, login='def', email='def@mail.ru', gender=true, registerDate=1998-02-02T00:00:00+03:00}
     User{id=3, login='ghi', email='ghi@mail.ru', gender=true, registerDate=1998-03-03T00:00:00+03:00}
-    User{id=1, login='abc', email='abcd@mail.ru', gender=false, registerDate=2020-02-20T00:00:00+03:00}
     > 5
-    Введите id пользователя, которого хотите удалить: 10
-    Can't delete User. User with specified id: 10 not found 
-    Попробуй ещё раз!
+    Введите id пользователя, которого хотите удалить: 2
+    1
+    > 1
+    User{id=1, login='abc', email='abc@mail.ru', gender=true, registerDate=1998-01-01T00:00:00+03:00}
+    User{id=3, login='ghi', email='ghi@mail.ru', gender=true, registerDate=1998-03-03T00:00:00+03:00}
     > 
+    
+In server logs: "AUTH USING abc 1234"

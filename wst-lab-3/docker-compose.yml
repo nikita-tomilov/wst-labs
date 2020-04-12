@@ -5,8 +5,8 @@ services:
       context: ./containers/postgre
     ports:
       - "5432:5432"
-    image: wst_2_postgre_image
-    container_name: postgre_lab2
+    image: wst_3_postgre_image
+    container_name: postgre_lab3
 #  glassfish:
 #    build:
 #     context: ./containers/glassfish
